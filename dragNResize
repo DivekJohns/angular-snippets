@@ -1,0 +1,586 @@
+import {AfterViewInit, Component, OnInit} from '@angular/core';
+import {UploadService} from '../services/upload.service';
+import {ActivatedRoute} from '@angular/router';
+import {apiUrl} from '../../environments/environment';
+import {HttpClient} from '@angular/common/http';
+
+
+import 'fabric';
+declare const fabric: any;
+
+
+
+@Component({
+  selector: 'app-workspace',
+  template: `
+<!--<div  *ngIf="!errorOccurred">-->
+<!--  <div class="">-->
+<!--    <div class="row justify-content-between"  style="width: 100%">-->
+<!--      <div class="col-sm-2">-->
+<!--        <div class="menu-items">-->
+<!--          <div class="d-flex flex-column">-->
+<!--            <div class="p-2 menu-item" align="center"-->
+<!--                 (click)="addWidget()"><img src="assets/sign.png" class="menu-image"></div>-->
+<!--            <div class="p-2 menu-item "  align="center">-->
+<!--              <img src="assets/cancel.png" class="menu-image"></div>-->
+<!--            <div class="p-2 menu-item" align="center">-->
+<!--              <img src="assets/cancel.png" class="menu-image"></div>-->
+<!--            <div class="p-2 menu-item" align="center">-->
+<!--              <img src="assets/cancel.png" class="menu-image"></div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--      <input type="hidden" [(ngModel)]="document">-->
+<!--      <div id="divek" class="col-sm-10">-->
+<!--        <app-pdfview [pdfImages] = "pdfImages"></app-pdfview>-->
+<!--        &lt;!&ndash;        <div id="mydiv" class='resizable'>&ndash;&gt;-->
+<!--        &lt;!&ndash;          <span id="mydivheader" class="mydivheader">	<p> &#x2723; </p></span>&ndash;&gt;-->
+<!--        &lt;!&ndash;          <div class='resizers'>&ndash;&gt;-->
+<!--        &lt;!&ndash;            <span class='resizer top-left'></span>&ndash;&gt;-->
+<!--        &lt;!&ndash;            <span class='resizer top-right'></span>&ndash;&gt;-->
+<!--        &lt;!&ndash;            <span class='resizer bottom-left'></span>&ndash;&gt;-->
+<!--        &lt;!&ndash;            <span class='resizer bottom-right'></span>&ndash;&gt;-->
+<!--        &lt;!&ndash;          </div>&ndash;&gt;-->
+<!--        &lt;!&ndash;      </div>&ndash;&gt;-->
+<!--      </div>-->
+<!--    </div>-->
+<!--  </div>-->
+<!--  <button *ngIf="document.status === 'reqsign'" id="SignButton"  class="btn btn-primary sign-button" value="{{signButtonValue}}" (click)="submitDocument()">Request Signature</button>-->
+<!--  <button *ngIf="document.status === 'sign'"   class="btn btn-primary sign-button" value="{{signButtonValue}}" (click)="submitDocument()">Sign Document</button>-->
+<!--  <div *ngIf="document.status === 'signed'" class="signed-info text-success"> This Document Digitally is signed by {{document.to}}  </div>-->
+<!--  <div *ngIf="document.status === 'awaitsign'" class="signed-info text-info"> Awaiting to Digitally sign document by {{document.to}}  </div>-->
+<!--</div>-->
+
+
+<!--  <div *ngIf="errorOccurred" class="card text-center">-->
+<!--    <div class="card-body">-->
+<!--      <h5 class="card-title  bg-warning">Error</h5>-->
+<!--      <p class="card-text">Looks like bad url as been passed to site</p>-->
+<!--    </div>-->
+<!--  </div>-->
+`,
+  styles: [`.container{
+  padding:0;
+  margin: 5% 0 0 0;
+}
+.menu-items{
+  display: flex;
+  flex-direction: column;
+  height: 600px;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  align-items: baseline;
+  .menu-item {
+    padding: 5%;
+    border: solid 1px #979797;
+    background-color: #fffff;
+    .menu-image{
+      width: 85%;
+      height: 85%;
+      object-fit: contain;
+    }
+  }
+}
+
+
+.sign-button{
+  position: fixed;
+  left: 50%;
+  top: 80%;
+  transform: translate(-50%, -50%);
+}
+
+.signed-info{
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.col-sm-2{
+  width: 20%
+}
+
+.col-sm-10{
+  background: #d8d8d8;
+  padding: 3%;
+  position: relative;
+  height: 100%;
+  width:  80%;
+  overflow:scroll;
+  top: 3%;
+
+}
+
+.resizable {
+  max-height: inherit;
+  background: rgb(19, 167, 226);
+  border: 3px solid #4286f4;
+  width: 100px;
+  height: 100px;
+  position: absolute;
+  top: 100px;
+  left: 100px;
+  .mydivheader {
+    cursor: move;
+    color: grey;
+    position: relative;
+    z-index: 999999999999999;
+    left: 46%;
+    top: -31px;
+    cursor: move;
+    align-items: center;
+    p{
+      font-size: inherit;
+    }
+  }
+}
+
+.resizable .resizers{
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.resizable .resizers .resizer{
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  //background:transparent;
+  background:darkgray;
+  position: absolute;
+}
+
+//.resizable .resizers .resizer:hover{
+//  background:darkgray;
+//}
+
+.resizable .resizers .resizer.top-left {
+  left: -5px;
+  top: -5px;
+  cursor: nwse-resize; /*resizer cursor*/
+}
+.resizable .resizers .resizer.top-right {
+  right: -5px;
+  top: -5px;
+  cursor: nesw-resize;
+}
+.resizable .resizers .resizer.bottom-left {
+  left: -5px;
+  bottom: -5px;
+  cursor: nesw-resize;
+}
+.resizable .resizers .resizer.bottom-right {
+  right: -5px;
+  bottom: -5px;
+  cursor: nwse-resize;
+}
+
+
+p {
+  font-family: Lato;
+}
+
+.my-block {
+  width: 200px;
+  height: 200px;
+  background-color: gray;
+  border: solid 1px black;
+  color: white;
+  text-align: center;
+}
+
+
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+
+  background: #f1f1f1;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.is-visible{
+  animation: fadeIn .3s  ease-in-out;
+}
+
+.is-hidden{
+  animation: fadeOut .3s ease-in-out;
+  display: none;
+}
+
+@-webkit-keyframes fadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@-webkit-keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1;  }
+}
+`]
+})
+export class WorkspaceComponent implements OnInit, AfterViewInit {
+  window = window;
+  title = 'docusign';
+  private index = 0;
+  pdfImages: any;
+  document = {
+    status: 'reqsign',
+    from: undefined,
+    to: undefined,
+    webhookurl: undefined,
+    accesstoken: undefined,
+    returntoken: undefined,
+    _id: ''
+  };
+  signButtonValue: any;
+  private appInfo: any;
+  private store: any;
+  errorOccurred = true;
+  private id: any;
+  private email: any;
+
+
+  constructor(private uploadService: UploadService, private route: ActivatedRoute, private http: HttpClient, ) {
+
+    this.uploadService.getUpload().subscribe((document: any) => {
+      if (document.uploadData && document.uploadData.length > 0) {
+        this.store = document;
+        this.pdfImages = document.uploadData[0].fileInfo.pdfImageUrls;
+        this.document = document.documentData;
+        if (this.document.to === this.email &&  this.document.status == 'awaitsign') {
+          this.document.status = 'sign';
+        }
+
+        if (this.document.from === this.email && this.document.status == 'signed') {
+          this.document.status = 'signed';
+        }
+      }
+    });
+  }
+
+
+  ngOnInit(): void {
+    this.id = this.route.snapshot.params.id;
+    this.email = this.route.snapshot.params.email;
+    if (this.email || this.id) {
+        this.getDoc();
+       } else {
+      this.errorOccurred = false;
+    }
+    // this.dragElement(document.getElementById('mydiv'));
+    // this.makeResizableDiv('resizable' + this.index);
+    // this.makeResizableDiv('.resizable');
+  }
+ getDoc() {
+   this.http.get(apiUrl + 'document-info/' + this.id)
+     .subscribe(
+       async (documentData: any) => {
+         this.document = documentData.document;
+         this.uploadService.setUpload({
+           uploadData: documentData.document.fileInfo,
+           documentData: documentData.document
+         });
+         this.errorOccurred = false;
+       },
+       error => {
+         this.errorOccurred = true;
+         console.log(error);
+       }
+     );
+ }
+  submitDocument() {
+    if (this.document.status === 'reqsign') {
+      this.document.status = 'awaitsign';
+      this.http.put(apiUrl + 'update-document/' + this.document._id, this.document)
+        .subscribe(
+          async (documentData: any) => {
+            // window.opener = self;
+            // window.close();
+            this.uploadService.setUpload({uploadData: this.store.uploadData, documentData: documentData.updated});
+          },
+          error => {
+            console.log(error);
+          }
+        );
+    } else {
+      this.document.status = 'signed';
+      this.http.put(apiUrl + 'update-document/' + this.document._id, this.document)
+        .subscribe(
+          async (documentData: any) => {
+            this.uploadService.setUpload({uploadData: this.store.uploadData, documentData: documentData.updated});
+          },
+          error => {
+            console.log(error);
+          }
+        );
+    }
+  }
+
+  addWidget() {
+
+    const t = document.getElementById('divek');
+    // document.body.firstElementChild.appendChild(t);
+
+
+    this.index++;
+    const div = document.createElement('div');
+    div.id = 'mydiv' + this.index;
+    div.classList.add('resizable');
+    div.classList.add('resizable' + this.index);
+
+
+    const span = document.createElement('span');
+    span.classList.add('mydivheader');
+    span.id = div.id + 'header';
+    span.innerHTML = `<p> &#x2723; </p></span>`;
+
+    div.append(span);
+
+
+    const resizer = document.createElement('div');
+    resizer.classList.add('resizers');
+    resizer.id = 'resizers' + this.index;
+    // for (const item of ['top-left', 'top-right', 'bottom-left', 'bottom-right']) {
+    for (const item of ['bottom-right']) {
+      const resize = document.createElement('span');
+      resize.classList.add('resizer');
+      resize.classList.add(`resizer${this.index}`);
+      resize.classList.add(item);
+      resizer.append(resize);
+    }
+
+    div.append(resizer);
+    t.append(div);
+    this.dragElement(div);
+    this.makeResizableDiv('.' + div.classList[1]);
+  }
+
+  makeResizableDiv(div) {
+    const element = document.querySelector(div);
+    const resizers = document.querySelectorAll(div + ' .resizer');
+    const minimum_size = 20;
+    let original_width = 0;
+    let original_height = 0;
+    let original_x = 0;
+    let original_y = 0;
+    let original_mouse_x = 0;
+    let original_mouse_y = 0;
+    for (let i = 0; i < resizers.length; i++) {
+      const currentResizer = resizers[i];
+      currentResizer.addEventListener('mousedown', resizehandler);
+      currentResizer.addEventListener('touchstart', this.touchHandler);
+      currentResizer.addEventListener('touchend', this.touchHandler);
+      currentResizer.addEventListener('touchcancel', this.touchHandler);
+      currentResizer.addEventListener('touchmove', this.touchHandler);
+
+      function resizehandler(e) {
+        e.preventDefault();
+        original_width = parseFloat(getComputedStyle(element, null).getPropertyValue('width').replace('px', ''));
+        original_height = parseFloat(getComputedStyle(element, null).getPropertyValue('height').replace('px', ''));
+        original_x = element.getBoundingClientRect().left;
+        original_y = element.getBoundingClientRect().top;
+        original_mouse_x = e.pageX;
+        original_mouse_y = e.pageY;
+        window.addEventListener('mousemove', resize);
+        window.addEventListener('mouseup', stopResize);
+      }
+
+      function resize(e) {
+        if (currentResizer.classList.contains('bottom-right')) {
+          const width = original_width + (e.pageX - original_mouse_x);
+          const height = original_height + (e.pageY - original_mouse_y);
+          if (width > minimum_size) {
+            element.style.width = width + 'px';
+          }
+          if (height > minimum_size) {
+            element.style.height = height + 'px';
+          }
+        } else if (currentResizer.classList.contains('bottom-left')) {
+          const height = original_height + (e.pageY - original_mouse_y);
+          const width = original_width - (e.pageX - original_mouse_x);
+          if (height > minimum_size) {
+            element.style.height = height + 'px';
+          }
+          if (width > minimum_size) {
+            element.style.width = width + 'px';
+            element.style.left = original_x + (e.pageX - original_mouse_x) + 'px';
+          }
+        } else if (currentResizer.classList.contains('top-right')) {
+          const width = original_width + (e.pageX - original_mouse_x);
+          const height = original_height - (e.pageY - original_mouse_y);
+          if (width > minimum_size) {
+            element.style.width = width + 'px';
+          }
+          if (height > minimum_size) {
+            element.style.height = height + 'px';
+            element.style.top = original_y + (e.pageY - original_mouse_y) + 'px';
+          }
+        } else {
+          const width = original_width - (e.pageX - original_mouse_x);
+          const height = original_height - (e.pageY - original_mouse_y);
+          if (width > minimum_size) {
+            element.style.width = width + 'px';
+            element.style.left = original_x + (e.pageX - original_mouse_x) + 'px';
+          }
+          if (height > minimum_size) {
+            element.style.height = height + 'px';
+            element.style.top = original_y + (e.pageY - original_mouse_y) + 'px';
+          }
+        }
+      }
+
+      function stopResize() {
+        window.removeEventListener('mousemove', resize);
+      }
+    }
+  }
+
+  // Make the DIV element draggagle:
+  touchHandler(event) {
+    const touch = event.changedTouches[0];
+
+    const simulatedEvent = document.createEvent('MouseEvent');
+    simulatedEvent.initMouseEvent({
+        touchstart: 'mousedown',
+        touchmove: 'mousemove',
+        touchend: 'mouseup'
+      }[event.type], true, true, window, 1,
+      touch.screenX, touch.screenY,
+      touch.clientX, touch.clientY, false,
+      false, false, false, 0, null);
+
+    touch.target.dispatchEvent(simulatedEvent);
+    event.preventDefault();
+  }
+
+  dragElement(elmnt) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    if (document.getElementById(elmnt.id + 'header')) {
+      /* if present, the header is where you move the DIV from:*/
+      document.getElementById(elmnt.id + 'header').onmousedown = dragMouseDown;
+      document.getElementById(elmnt.id + 'header').ontouchstart = this.touchHandler;
+      document.getElementById(elmnt.id + 'header').ontouchend = this.touchHandler;
+      document.getElementById(elmnt.id + 'header').ontouchcancel = this.touchHandler;
+      document.getElementById(elmnt.id + 'header').ontouchmove = this.touchHandler;
+    } else {
+      /* otherwise, move the DIV from anywhere inside the DIV:*/
+      elmnt.onmousedown = dragMouseDown;
+      elmnt.ontouchstart = this.touchHandler;
+      elmnt.ontouchend = this.touchHandler;
+      elmnt.ontouchcancel = this.touchHandler;
+      elmnt.ontouchmove = this.touchHandler;
+    }
+
+    function dragMouseDown(e) {
+      e = e || window.event;
+      e.preventDefault();
+      // get the mouse cursor position at startup:
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+      document.onmouseup = closeDragElement;
+      // call a function whenever the cursor moves:
+      document.onmousemove = elementDrag;
+    }
+
+    function elementDrag(e) {
+      e = e || window.event;
+      e.preventDefault();
+      // calculate the new cursor position:
+
+
+      pos1 = pos3 - e.clientX;
+      pos2 = pos4 - e.clientY;
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+      // set the element's new position:
+      console.log('left:', elmnt.offsetLeft);
+      console.log('top:', elmnt.offsetTop);
+      console.log('pos1:', pos1);
+      console.log('pos2:', pos2);
+      console.log('pos3:', pos3);
+      console.log('pos4:', pos4);
+      const divek = document.getElementById('divek');
+      //
+      const poffsetWidth = divek.offsetWidth;
+
+      // const elementHeight = elmnt.offsetTop + elmnt.offsetHeight + 25;
+      if (elmnt.offsetLeft - pos1 > 0) {
+        const value = (elmnt.offsetLeft - pos1);
+        const vh = `${(100 * value) / window.innerWidth}vw`;
+        elmnt.style.left = vh;
+      }
+
+      if (elmnt.offsetTop - pos2 > 0) {
+        const value = (elmnt.offsetTop - pos2);
+        // let vh = `${(100 * value) / window.innerHeight}vh`
+        elmnt.style.top = value + 'px';
+      }
+
+    }
+
+    function closeDragElement() {
+      /* stop moving when mouse button is released:*/
+      document.onmouseup = null;
+      document.onmousemove = null;
+    }
+  }
+
+  ngAfterViewInit(): void {
+    const canvas = new fabric.Canvas('canvas');
+    const rect = new fabric.Rect({
+      top : 100,
+      left : 100,
+      width : 60,
+      height : 70,
+      fill  : 'red'
+    });
+    canvas.add(rect);
+    let scrollPos = 0;
+    const nav = document.getElementById('SignButton');
+    if (nav) {
+      function checkPosition() {
+        const windowY = window.scrollY;
+        if (windowY < scrollPos) {
+          // Scrolling UP
+          nav.classList.add('is-visible');
+          nav.classList.remove('is-hidden');
+        } else {
+          // Scrolling DOWN
+          nav.classList.add('is-hidden');
+          nav.classList.remove('is-visible');
+        }
+        scrollPos = windowY;
+      }
+
+      function debounce(func, wait = 10, immediate = true) {
+        let timeout;
+        return function() {
+          const context = this, args = arguments;
+          const later = function() {
+            timeout = null;
+            if (!immediate) { func.apply(context, args); }
+          };
+          const callNow = immediate && !timeout;
+          clearTimeout(timeout);
+          timeout = setTimeout(later, wait);
+          if (callNow) { func.apply(context, args); }
+        };
+      }
+      window.addEventListener('scroll', debounce(checkPosition));
+    }
+
+  }
+}
+
